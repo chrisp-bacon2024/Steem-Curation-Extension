@@ -79,7 +79,6 @@ class Post {
                 const botVotePct = calculateRsharePercentage(rawDetails.active_votes);
                 this.details.organic_payout_value = this.details.total_payout_value * (1 - 0.01 * botVotePct);
                 this.details.wordCount = getWordCount(this.details.body);
-                console.log(this.details.wordCount)
                 this.details.readingTimeMinutes = getReadingTime(this.details.wordCount);
 
             } else {
@@ -90,6 +89,7 @@ class Post {
             throw error;
         }
     }
+
     getVoteData() {
         const votes = this.details.active_votes;
         votes.sort((a, b) => new Date(a.time) - new Date(b.time));
@@ -104,6 +104,7 @@ class Post {
         for (vote of votes){
             total_rshares += vote.rshares / 1000000;
         }
+        this.details.totalRshares = total_rshares
         const values = [];
         let vote_val;
         let botVotePct;
@@ -123,5 +124,86 @@ class Post {
             vote.burn_value = ( temp_total_value / 2 ) * this.details.burnPct;
         }
         return votes
+    }
+
+    async getTotalVests(payoutTimeInt){
+        const sumBeneficiaryWeightsBP = (beneficiaries) => {
+            if (!Array.isArray(beneficiaries)) return 0;
+            return beneficiaries.reduce((sum, b) => {
+                const w = Number(b?.weight);
+                return sum + (Number.isFinite(w) ? w : 0);
+            }, 0);
+        };
+
+        const totalBenBP = sumBeneficiaryWeightsBP(this.details.beneficiaries)
+        const totalBenFrac = Math.min(Math.max(totalBenBP / 10000, 0), 1);
+        let percentage = 0.5 - totalBenFrac;
+        const ε = 1e-9;
+
+        let url, scaleBy;
+
+        if (percentage <= ε){
+            const ben0 = this.details.beneficiaries?.[0];
+            if (!ben0 || !Number.isFinite(ben0.weight) || ben0.weight <= 0) return;
+            url = `https://sds.steemworld.org/rewards_api/getRewards/comment_benefactor_reward/${ben0.account}/${payoutTimeInt-30000}-${payoutTimeInt+30000}`;
+            scaleBy = ben0.weight / 10000;
+        } else {
+            url = `https://sds.steemworld.org/rewards_api/getRewards/author_reward/${this.author}/${payoutTimeInt-30000}-${payoutTimeInt+30000}`;
+            scaleBy = percentage;
+        }
+
+        let response;
+        let data; 
+        const MAX_RETRIES = 6;
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                response = await fetch(url);
+                if (response.ok) {
+                    try {
+                    data = await response.json();
+                    break;
+                    } catch (e) {
+                    console.warn(`JSON parse failed (attempt ${attempt}/${MAX_RETRIES})`, e);
+                    }
+                } else {
+                    if (response.status >= 500 && response.status < 600) {
+                        console.warn(`Server ${response.status}; retrying ${attempt}/${MAX_RETRIES}`);
+                    } else {
+                        console.error(`HTTP error ${response.status}; not retrying`);
+                    return;
+                    }
+                }
+            } catch (err) {
+                console.warn(`Fetch failed (attempt ${attempt}/${MAX_RETRIES})`, err);
+            }
+            await sleep(200 * attempt);
+        }
+
+        if (!data) {
+            console.error('Failed to retrieve reward data after retries.');
+            return;
+        }
+        
+        const cols = data?.result?.cols;
+        const authInd = cols["author"];
+        const permInd = cols["permlink"];
+        const sbdInd = cols["sbd"];
+        const steemInd = cols["steem"]
+        const vestsInd = cols["vests"];
+
+        const rows = data?.result?.rows;
+        const reward = rows?.find(r => r[authInd] === this.author && r[permInd] === this.permlink)
+        if (!reward) return;
+        
+        const rewardVests = Number(reward[vestsInd]) || 0;
+        const rewardSbd = Number(reward[sbdInd]) || 0;
+        const rewardSteem = Number(reward[steemInd]) || 0;
+
+        if (rewardSbd > 0 || rewardSteem > 0) {
+            scaleBy = scaleBy / 2;
+        }
+        if (rewardVests <= 0) return;
+        if (scaleBy == null || !Number.isFinite(scaleBy) || scaleBy <= 0) return;
+        this.details.totalVests = rewardVests * (1 / scaleBy);
     }
 }

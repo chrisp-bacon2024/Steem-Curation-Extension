@@ -1,4 +1,4 @@
-const loadPost = async (p_info) => {
+const loadPost = async (p_info, language) => {
     const postClass = document.querySelector('.Post');
 
     if (postClass) {
@@ -9,24 +9,24 @@ const loadPost = async (p_info) => {
         const post = await Post.create(author, permlink);
 
         if (post) {
-            if (!(p_info.author === author && p_info.permlink === permlink)) {
+            const samePost = (p_info.author === author && p_info.permlink === permlink);
+
+            if (!samePost) {
+                _sceVoterTipsBound = false;
                 displayWordCountAndReadingTime("PostFull__time_author_category_large", post.details.wordCount, post.details.readingTimeMinutes)
                 loadPostValueGraph(post);
                 loadPostVoteGraph(post);
                 const payouts = await loadAuthorWeeklyEarningsGraph(post);
                 if (payouts) {
-                    console.log(payouts)
                     loadAuthorWeeklyEarningsBarGraph(payouts);
                 }
                 loadPostVoteData(post);
                 displayPostResteemData(post, ".RightShare__Menu");
+                tips = attachVoterHoverTooltips(post, language, 7);
+                getTipEfficiency(tips);
             } else {
                 return p_info
             }
-
-            // Select the unordered list 
-
-            // Get the element with the class 'Voting__voters_list'
 
         } else {
             console.log('There was a problem loading the post data!');
