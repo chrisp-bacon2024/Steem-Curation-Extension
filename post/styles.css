@@ -1,36 +1,238 @@
+.Voting__voters_list,
+.Voting__voters_list .VerticalMenu.menu.vertical,
+.Voting__voters_list .VerticalMenu,
+.Voting__voters_list .menu {
+  overflow: visible;
+}
+
+.vote-item {
+  pointer-events: auto;
+}
+
 .voter-tooltip {
-    position: fixed;
-    z-index: 9999;
-    min-width: 180px;
-    max-width: 260px;
+  pointer-events: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    margin-left: 2%;
+    z-index: 1;
+
+    width: 150%;
+    height: 700%;
     padding: 10px 12px;
-    border-radius: 10px;
+
     background: #111;
     color: #fff;
     box-shadow: 0 8px 30px rgba(0,0,0,.35);
     font: 12px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
     opacity: 0;
-    transform: translateY(-50%) scale(.98);
     transition: opacity .12s ease, transform .12s ease;
-    pointer-events: none
-}
 
-.voter-tooltip.visible{
+    display: flex;
+    flex-direction: column; /* stack header & chart vertically */
+}
+/* When visible */
+.voter-tooltip.visible {
     opacity: 1;
-    transform: translateY(-50%) scale 1;
+    pointer-events: auto;
+    z-index: 9999;
 }
 
-.voter-tooltip .name{
+/* --- proportional layout --- */
+.voter-tip__header {
+    flex: 0 0 20%;       /* fixed to 10% of parent height */
+    border-radius: 6px 6px 0 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     font-weight: 600;
-    margin-bottom: 6px;
-    opacity: .95;
+    letter-spacing: 0.5px;
 }
 
-.voter-tooltip .stat{
-    display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 6px 1-px;
+.voter_metrics {
+    display: flex;
+    justify-content: space-between; /* spread evenly across header */
+    align-items:center;
+    width: 100%;
+    height: 100%;
+
+    padding: 0 6px;
+    box-sizing: border-box;
+    gap: 10px;
+}
+
+.voter_metric {
+    display: flex;
+    width: 25%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+}
+
+.voter_metric__label {
+    font-size: 11px;
+    letter-spacing: .2px;
+    margin-bottom: 2px;
     white-space: nowrap;
-
-    .voter-tooltip .label{ opacity:.7 }
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
+
+.voter_metric__value {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.voter_metric + .voter_metric {
+  position: relative;
+}
+.voter_metric + .voter_metric::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 15%;
+  bottom: 15%;
+  width: 1px;
+}
+
+/* responsive stacking on narrow tooltips */
+@media (max-width: 420px) {
+  .voter_metrics {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .voter_metric {
+    flex: 1 1 45%; /* two per row when narrow */
+  }
+  .voter_metric + .voter_metric::before { display: none; }
+}
+
+.voter-tip__chart {
+  position: relative;
+  background: rgba(60, 130, 255, 0.85); /* blue for visibility */
+  flex: 1 1 80%;        /* remaining 90% height */
+  border-radius: 0 0 6px 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 600;
+  overflow: hidden;     /* for canvas cleanliness */
+}
+
+.voter-tip__chart, .voter-tip__chart canvas {
+  pointer-events: auto;
+}
+
+/* Optional shared text color */
+.voter-tip__header,
+.voter-tip__chart {
+    color: #fff;
+}
+
+/* added */
+.eff-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease;
+  z-index: 2;
+}
+
+.eff-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: #f5f5f5;
+  stroke: none;
+  opacity: 0.75;
+  transition: transform .15s ease, fill .15s ease;
+}
+
+.eff-toggle:hover svg {
+  transform: scale(1.15);
+  fill: #ffffff;
+}
+
+/* match voter list look (LIGHT mode only) */
+body:not(.theme-dark) .voter-tooltip {
+  background: #f4f4f4;
+  color: #111827;
+  border: 1px solid #464646;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+  border-radius: 6px;
+}
+
+/* neutrl header to match list chrome */
+body:not(.theme-dark) .voter-tip__header {
+  background-color: #f0f0f0;
+  color: #374151; /* slate-900 */
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+}
+
+/* labels/values + dividers softened */
+body:not(.theme-dark) .voter_metric__label { color : #373737; } /* gray-500 */
+body:not(.theme-dark) .voter_metric__value { color: #606060; } /* gray-900 */
+
+/* chart container: white card, faint frame */
+body:not(.theme-dark) .voter-tip__chart {
+  background: #f0f0f0;
+  color: #374151;
+  border-radius: 0 0 6px 6px;
+  outline: 1px solid #eef2f7;
+}
+
+/* toggle button: minimal chrome, no strong color */
+body:not(.theme-dark) .eff-toggle {
+  background: rgba(15, 23, 42, .04); /* very light slate */
+  border: 1px solid rgba(15, 23, 42, .08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+body:not(.theme-dark) .eff-toggle:hover { background: rgba(15, 23, 42, .08)}
+
+/* icons inherit currentColor; keep them muted */
+body:not(.theme-dark) .eff-toggle { color: #64748b; } /* slate-500 */
+body:not(.theme-dark) .eff-toggle:hover { color: #374151 } /* gray-700 */
+body:not(.theme-dark) .eff-toggle[aria-pressed="true"] { color: #1f2937; } /* gray 800 */
+
+/* === DARK MODE === */
+body.theme-dark .voter-tooltip {
+  background: #1c252b;
+  border: 1px solid #434344;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .voter-tip__chart {
+  background: #283336;
+  color: #fcfcfc;
+  outline: 1px solid #000000;
+}
+
+body.theme-dark .voter_metric__label { color: #fcfcfc; }
+body.theme-dark .voter_metric__value { color: #e1e3e3; }
+
+body.theme-dark .eff-toggle {
+  background: rgba(155, 166, 174, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+}
+
+body.theme-dark .eff-toggle:hover { color: #374151; }

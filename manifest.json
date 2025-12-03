@@ -21,7 +21,7 @@
         "https://steemit.steemnet.org/*",
         "https://steemit.moecki.online/*"
       ],
-      "js": ["profilePictureDisplay.js", "language.js", "payoutDisplay.js", "steemWorld.js", "useful.js", "post/author.js", "graph.js", "post/Post.js", "post/loadPostData.js", "libs/chart.min.js","botNotifier.js", "postMetrics.js", "overlay.js", "resteemControl.js", "main.js"],
+      "js": ["post/votes/VoterTip.js", "post/votes/votes.js", "profilePictureDisplay.js", "language.js", "payoutDisplay.js", "steemWorld.js", "useful.js", "post/author.js", "graph.js", "post/Post.js", "post/loadPostData.js", "libs/chart.min.js","botNotifier.js", "postMetrics.js", "overlay.js", "resteemControl.js", "main.js"],
       "css": [ "post/styles.css", "styles.css", "profilePictureDisplay.css" ]
     }
   ]

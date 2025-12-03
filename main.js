@@ -302,6 +302,7 @@ const sceMutationObserver = () => {
         updatePayoutValue();
 
         addUserVpRing_silent();
+        maybeLoadPost();
     } finally {
         SCE_SILENT--;
     }
@@ -310,13 +311,13 @@ const sceMutationObserver = () => {
 
 
 window.addEventListener('load', async () => {
-    post_info = await loadPost({"author":null, "permlink":null}); // Call your function
+    post_info = await loadPost({"author":null, "permlink":null}, USER_LANGUAGE); // Call your function
 
 });
 
 window.addEventListener('click', async () => {
      // Call your function
-     post_info = await loadPost(post_info);
+     post_info = await loadPost(post_info, USER_LANGUAGE);
 });
 
 window.addEventListener('scroll', async () => {

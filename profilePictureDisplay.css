@@ -18,13 +18,11 @@
   --thickness: 4px;       /* ring width (use an even px value) */
   --c1: #63D2B1;          /* color 1 */
   --c2: #FFB8B8; 
-  /* make sure it’s SQUARE and preferably an even number of px */
-  width: 40px; height: 40px;           /* <-- both even */
+  width: 40px; height: 40px;   /* should be a square with even pixels */
 }
 
 /* ring behind the avatar */
 .avatar-wrap::after{         /* color 2 */
-
   content: "";
   position: absolute;
   left: 50%; top: 45%;
