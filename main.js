@@ -12,6 +12,28 @@ let post_info = {"author":null, "permlink":null}
 
 let USER_LANGUAGE;
 
+// ---- 1) global guard
+let SCE_SILENT = 0;
+
+// Wrap sync code
+function withSilentMutations(fn) {
+  return function (...args) {
+    SCE_SILENT++;
+    try { return fn.apply(this, args); }
+    finally { SCE_SILENT--; }
+  };
+}
+
+// Wrap async code
+function withSilentMutationsAsync(fn) {
+  return async function (...args) {
+    SCE_SILENT++;
+    try { return await fn.apply(this, args); }
+    finally { SCE_SILENT--; }
+  };
+}
+
+
 /*
  *  The main logic is in highLight() and handleProfileDropdownClick()
  * o highlight()
@@ -204,6 +226,20 @@ function getAddress(elem) {
  * Network queries
  */
 
+const getUsername = () =>{
+    const titleElements = document.querySelectorAll('li.title');
+    titleElements.forEach(element => {
+        if (element.textContent.trim() === element.childNodes[0].textContent.trim()) {
+            accountElement = element;
+        }
+    });
+    if (accountElement) {
+        let elementText = accountElement.textContent.trim();
+        const username = elementText.split(" ")[0]
+        return username 
+    }
+}
+
 // Function to get voting power
 async function getVotingPower(username) {
     const urlRequestAccountFull = `${urlRequestAccount}${username}/null/upvote_mana_percent`;
@@ -235,33 +271,47 @@ function modifyUserElement() {
 }
 
 // Mutation observer to detect logout -> login and other page changes.
-function sceMutationObserver() {
-    const parentElement = document;
-    let observer;
+const sceMutationObserver = () => {
+  const root = document.body; // narrower than `document`
+  const config = { childList: true, subtree: true }; // start: no attributes
 
-    if (parentElement) {
-        observer = new MutationObserver((mutationsList) => {
-            addButtonsToSummaries(); // New for curation info buttons
-            modifyUserElement();
-            highLight();
-            updateResteemVisibility();
-            USER_LANGUAGE = detectUserLanguage();
-            updatePayoutValue();
-            console.log(USER_LANGUAGE)
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'attributes' && (mutation.attributeName === 'class'
-                    || mutation.attributeName === 'style')) {
-                        createResteemToggleControl();
-                }
-            }
-        });
-        const config = { childList: true, subtree: true, attributes: true };
-        observer.observe(parentElement, config);
+  const observer = new MutationObserver(() => {
+    if (SCE_SILENT) return;
+
+    if (sceMutationObserver.__pending) return;
+    sceMutationObserver.__pending = true;
+    requestAnimationFrame(() => {
+        sceMutationObserver.__pending = false;
+        runOncePerBatch();
+    })
+  });
+
+  observer.observe(root, config);
+
+  const runOncePerBatch = () => {
+    SCE_SILENT++;
+    try {
+        addButtonsToSummaries();
+        modifyUserElement();
+        highLight();
+        updateResteemVisibility();
+
+        const newLang = detectUserLanguage();
+        if (newLang && newLang !== USER_LANGUAGE) USER_LANGUAGE = newLang;
+
+        updatePayoutValue();
+
+        addUserVpRing_silent();
+    } finally {
+        SCE_SILENT--;
     }
+  }
 }
+
 
 window.addEventListener('load', async () => {
     post_info = await loadPost({"author":null, "permlink":null}); // Call your function
+
 });
 
 window.addEventListener('click', async () => {
@@ -274,6 +324,6 @@ window.addEventListener('scroll', async () => {
 
 addButtonsToSummaries();        // New for curation info buttons
 sceMutationObserver();         // Mutation observer for new dropdown menu after login.
-// createResteemToggleControl();         // Resteem checkbox
+createResteemToggleControl();         // Resteem checkbox
 
 console.log("The extension is done.");

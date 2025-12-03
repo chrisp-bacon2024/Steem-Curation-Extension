@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2-beta] - 2025-10-17
+- Updated payout display to include beneficiary payouts
+- Added circle display around profile picture representing user current voting power
+- Added mutation safeguard to avoid recursive loop from vp display updates to interface
+
 ## [0.5.1-beta] - 2025-04-25]
 ### Added
 

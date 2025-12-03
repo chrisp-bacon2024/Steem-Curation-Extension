@@ -1,0 +1,46 @@
+.Header__notification{
+    position: relative;
+    z-index: 2;
+}
+
+.Userpic{
+  position: relative;
+  z-index: 1;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+}
+
+.avatar-wrap{
+  position: relative;
+  --p: 45;                /* green percent */
+  --thickness: 4px;       /* ring width (use an even px value) */
+  --c1: #63D2B1;          /* color 1 */
+  --c2: #FFB8B8; 
+  /* make sure it’s SQUARE and preferably an even number of px */
+  width: 40px; height: 40px;           /* <-- both even */
+}
+
+/* ring behind the avatar */
+.avatar-wrap::after{         /* color 2 */
+
+  content: "";
+  position: absolute;
+  left: 50%; top: 45%;
+  /* size = avatar + ring on both sides */
+  width: calc(100% + 2 * var(--thickness));
+  height: calc(100% + 2 * var(--thickness));
+  transform: translate(-50%,-50%);     /* centers exactly, avoids rounding drift */
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+
+  background: conic-gradient(var(--c1) calc(var(--p)*1%), var(--c2) 0);
+
+  /* punch the hole for the ring; inner radius = avatar radius */
+  -webkit-mask: radial-gradient(circle,
+                  transparent calc(50% - var(--thickness)), #000 0);
+          mask: radial-gradient(circle,
+                  transparent calc(50% - var(--thickness)), #000 0);
+}
